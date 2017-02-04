@@ -1,0 +1,47 @@
+Bienvenu dans ce programme de classification de symboles
+
+Veuillez entrez un ou plusieurs symboles en respectant ces conditions:
+-Le premier charactère d'un symbole sera obligatoirement un tiret
+-Le deuxieme charactère sera une lettre majuscule.
+-Un symbole ne doit pas dépasser 5 caractères incluant le tiret. 
+-Un symbole ne peu contenir que 2 lettres.
+-La longeur total de la liste entrée ne doit pas dépasser 40 charactères
+
+
+Entrez des valeurs codifiées à classer en ordre croissant (faite '.' pour terminer): 
+-X23a -Z23b -X2 -Xa2 -XA
+
+Voici vos valeurs codifiées en ordre croissant.
+-XA -X2 -Xa2 -X23a -Z23b
+
+Entrez des valeurs codifiées à classer en ordre croissant (faite '.' pour terminer): 
+ -A12 -B -A11b -A11 -A11a
+
+Voici vos valeurs codifiées en ordre croissant.
+-B -A11 -A12 -A11a -A11b
+
+Entrez des valeurs codifiées à classer en ordre croissant (faite '.' pour terminer): 
+-Z -Z -Z1 -Z11z -Z1 -Z11
+
+Voici vos valeurs codifiées en ordre croissant.
+-Z -Z -Z1 -Z1 -Z11 -Z11z
+
+Entrez des valeurs codifiées à classer en ordre croissant (faite '.' pour terminer):
+-F   -A23r -A25r -A1 -A1a -Aa 
+
+Voici vos valeurs codifiées en ordre croissant.
+-F -Aa -A1 -A1a -A23r -A25r
+
+Entrez des valeurs codifiées à classer en ordre croissant (faite '.' pour terminer):
+ -Q8 -Q7 -Q6 -Q5 -Q4 -Q3 -Q2 -Q1 
+ 
+Voici vos valeurs codifiées en ordre croissant.
+-Q1 -Q2 -Q3 -Q4 -Q5 -Q6 -Q7 -Q8
+
+Entrez des valeurs codifiées à classer en ordre croissant (faite '.' pour terminer): 
+
+
+
+
+
+

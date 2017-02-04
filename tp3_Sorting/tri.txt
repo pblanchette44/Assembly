@@ -1,0 +1,370 @@
+; ********************************************************* 
+; Programme: TRI.TXT version PEP813 sous Windows
+;
+; Programme de lecture et tri d'une liste de symboles entrée par l'utilisateur.
+;
+; auteur: Simon Bastien et Philippe Blanchette
+; courriel: bastien.simon.3@courrier.uqam.ca, blanchette.philippe.2@courrier.uqam.ca
+; code perm:BASS14118708 et BLAP15029001
+; date: 29 juillet 2016
+; cours: INF2170
+; *********************************************************
+;
+
+         STRO    bienvenu,d       ; Affichage du message de bienvenu et des instructions
+debut:   LDA     0,i              ;Initialisation des valeurs
+         STA     nbcaract,d       
+         STA     compteur,d 
+         STA     comptLet,d
+         STA     prochain,d
+         STA     dernier,d
+         STA     tete,d
+         LDA     2,i
+         STRO    question,d       ; Affichage du message d'entrée de valeure
+lire:    LDA     0,i              ;Initialisation des valeurs
+         STA     boolMaj,d
+         STA     boolMin,d       
+         STA     boolChif,d
+         CHARI   caract,d    
+         LDBYTEA caract,d         ;analyse du caractère lu
+         CPA     10,i             ;caractère "Enter" ?
+         BREQ    finlire          ;oui, on termine la saisie
+         CPA     '.',i            ;caractère '.'?
+         BREQ    point            ;si oui le programme s'arrête
+         CPA     '-',i            ;caractère '-'?
+         BREQ    tirait           ;on gère le '-'
+         CPA     ' ',i            ;caractère ' '?
+         BREQ    espace           ;on gère le ' '
+         LDX     compteur,d       ;Verifie le compteur, si encore 0 erreur, pas bon, ce n'est pas un un caractère accepté quand la chaine est vide
+         BREQ    errLec
+         CPX     1,i              ;1 au compteur veut dire que première entré, seulement majuscule est acceptable
+         BREQ    premCar
+         CPX     5,i              ;Verification si la longeure du symbole entré est superieure a 5
+         BREQ    errLec 
+
+         CALL    veriChif         ;vérifie si chiffre
+         LDX     boolChif,d
+         BRGT    ecritTab    
+         CALL    veriMin          ;vérifie si lettre minuscule
+         LDX     boolMin,d
+         BRGT    ecritTab
+premCar: CALL    veriMaj          ;vérifie si lettre majuscule
+         LDX     boolMaj,d
+         BRGT    ecritTab
+         BR      errLec
+
+veriChif:CPA     '0',i            ;vérifie si le caractère est plus petit que 0
+         BRLT    pasChif   
+         CPA     '9',i            ;vérifie si le caractère est plus grand que 9
+         BRGT    pasChif 
+         LDX     1,i              ;si chiffre oui met a 1
+         STX     boolChif,d
+pasChif: RET0
+
+veriMaj: CPA     'A',i            ;vérifie si le caractère est plus petit que A
+         BRLT    pasMaj   
+         CPA     'Z',i            ;vérifie si le caractère est plus grand que Z
+         BRGT    pasMaj
+         LDX     1,i              ;si chiffre oui met a 1
+         STX     boolMaj,d
+         LDX     comptLet,d       ;vérifie le compte de lettre, 2 max
+         CPX     2,i         
+         BREQ    errLec
+         ADDX    1,i
+         STX     comptLet,d
+pasMaj:  RET0 
+
+veriMin: CPA     'a',i            ;vérifie si le caractère est plus petit que A
+         BRLT    pasMin   
+         CPA     'z',i            ;vérifie si le caractère est plus grand que Z
+         BRGT    pasMin
+         LDX     1,i
+         STX     boolMin,d        ;si chif oui met a 1
+         LDX     comptLet,d
+         CPX     2,i              ;vérifie le compte de lettre, 2 max
+         BREQ    errLec
+         ADDX    1,i
+         STX     comptLet,d
+pasMin:  RET0           
+
+  
+ecritTab:LDX     nbcaract,d       ;Ajoute un caractère lu au compteur qui se réinitialise à "ENTER"
+         ADDX    1,i         
+         STX     nbcaract,d
+         CPX     40,i             ;Si plus grand que 40 erreur
+         BRGT    errLec
+         LDX     compteur,d       ;ajoute un caractère a un deuxième compteur qui réinitialise à l'espace
+         ADDX    1,i
+         STX     compteur,d  
+         LDX     prochain,d
+         ADDX    compteur,d
+         STBYTEA     tableau,x
+         BR      lire             ;retourne à la lecture du prochain CHAR
+
+point:   LDX     nbcaract,d       ;vérifie si le '.' est le premier caractère lu sinon erreur
+         CPX     0,i
+         BRGT    errLec
+         CHARI   caract,d         ;vérifie si le caractère après '.' est "ENTER" sinon erreur
+         LDBYTEA caract,d    
+         CPA     10,i        
+         BREQ    fin
+         br      errLec
+         
+espace:  LDA     nbcaract,d       ;Ajoute un caractère lu au compteur
+         ADDA    1,i         
+         STA     nbcaract,d  
+         CPA     40,i             ;Si plus grand que 40 erreur 
+         BRGT    errLec
+         LDA     compteur,d       ;vérifie s'il y a eu un nombre entré avant l'espace, sinon revient directement à lecture
+         CPA     0,i
+         BREQ    lire             ;espace vide, repart en haut sans rien classer
+         CPA     1,i
+         BREQ    errLec           ;compteur a 1 signifie que le symbole ne contient qu'un tirait et qu'il y a erreur
+
+         LDX     prochain,d       ;Store le compteur 1 case au dessus du tableau
+         ADDX    1,i
+         STBYTEA tableau,x
+         
+         LDX     prochain,d       ;Load prochain, si égal a 0, l'entrée est la premiere et on lui attribue le pointeur -1
+         BREQ    moins1                   
+         
+         LDX     1,i              ;Si l'entrée n'est pas la première on prépare la comparaison
+         STX     numComp,d        ;Initialise le num de comparaison à 1 
+         LDX     prochain,d
+         ADDX    1,i 
+         LDBYTEA     tableau,x
+         STA     longueur,d       ;La longeur représente le nombre de comparaisons maximum
+         LDX     tete,d           ;Le premier élement comparé est l'élement de tête
+         STX     eleComp,d 
+          
+                      
+         CALL    methOrd          ;méthode vérififiant la position que doit aller la dernière entrée
+
+retour:  LDX     prochain,d       ;décale la variable prochain a la bonne place (compteur +1)
+         ADDX    1,i
+         ADDX    compteur,d
+         STX     prochain,d
+
+         LDX     0,i              ;réinitialise des valeures pour le bon fonctionnement du programme
+         STX     compteur,d
+         STX     comptLet,d
+         
+            
+         BR      lire             ;retourne lire le prochain CHAR  
+ 
+moins1:  LDX     -1,i        
+         STBYTEX tableau,d
+         LDX     prochain,d
+         BR      retour
+        
+        
+
+
+methOrd: SUBSP   4,i              ; #v1 #v2    
+recomRet:LDX     0,i
+         STX     compare,d
+         LDX     prochain,d       ;PREND ELEMENT APRES PROCHAIN
+         ADDX    numComp,d 
+         LDBYTEA     tableau,x
+         LDX     numComp,d
+         CPX     1,i              ;SI PREMIERE COMPARAISON CEST COMPARAISON DE COMPTEUR, PAS BESOIN DE TRANSFORMER
+         BREQ    staElem1
+         CALL    transEle
+staElem1:STA     2,s              ;STORE ÉLEMENT DANS PILE
+         LDX     eleComp,d        ;PREND ÉLEMENT COMPARER ET LOAD LE DEUXIEME ÉLEMENT À COMPARER
+         ADDX    numComp,d 
+         LDBYTEA tableau,x
+         LDX     numComp,d
+         CPX     1,i              ;SI PREMIÈRE COMPARAISON PAS BESOIN DE TRANSFORMER
+         BREQ    staElem2
+         CALL    transEle         ;SOUS PROGRAMME QUI MODIFIE ÉLEMENT A COMPARER POUR LES METTRE EN ORDRE 
+staElem2:STA     0,s
+         CALL    ordonne          ;SOUS-PROGRAMME QUI COMPARE
+         LDA     compare,d        ;LDA ORDONNE
+         BRLT    bonnePos         ;SI PLUS PETIT CA VEUT DIRE QUE 2E ÉLEMENT PLUS GRAND IL EST DONC A LA BONNE PLACE
+         BRGT    malPos           ;SI PLUS GRAND DEVRA FAIRE DEUXIEME METHODEORD EN CHANGEANT ELEMENT COMP QUELQUES TRUCS 
+         BREQ    recomm           ;si egale ça veut dire qu'il faut comparer un autre element car pareil
+finOrd:  RET4                     ; #v1 #v2
+
+malPos:  LDX     eleComp,d        ;GARDE L'ELEMENT COMPARÉ À DERNIER POUR LE CHEMIN DE POINTEUR
+         STX     dernier,d
+         LDBYTEA tableau,x        ;vérifie si c'est -1, donc le dernier
+         CPA     255,i            ;255 = -1
+         BREQ    moins1C    
+         STA     eleComp,d        ;si pas dernier, prépare la prochaine comparaison
+         LDX     1,i
+         STX     numComp,d
+         BR      recomRet
+
+moins1C: LDX     prochain,d       ;-1 donc dernier, donc met les bonnes places dans le tableau et termine
+         STBYTEA tableau,x
+         LDX     eleComp,d
+         LDA     prochain,d 
+         STBYTEA tableau,x
+         BR      finOrd
+
+recomm:  LDX     numComp,d        ;vérifie si le nombre de comparaison est aussi long que la valeur de la chaine, si non recommence
+         CPX     longueur,d
+         BREQ    bonnePos         ;si oui, tout les caractères sont pareil, donc à la bonne place
+         ADDX    1,i
+         STX     numComp,d
+         BR    recomRet
+
+bonnePos:LDX     eleComp,d        ;on load élement comparer   
+         CPX     tete,d           ;si égale a tête veut dire que nouvelle entrée plus petite que tête, donc nouvelle tête
+         BREQ    chgTete
+         LDX     dernier,d        ;charge le nombre à l'élement comparé   
+         LDA     prochain,d       ;charge la position de prochain et écrit le dernier élément comparé à cette place
+         STBYTEA     tableau,x 
+         LDA     eleComp,d        ;écrit la position de prochain à la position comparée
+         LDX     prochain,d
+         STBYTEA     tableau,x            
+         BR      finOrd
+
+chgTete: LDX     prochain,d       ;load prochain et met la valeur de l'élement comparé
+         LDA     eleComp,d
+         STBYTEA     tableau,x 
+         STX     tete,d           ;met prochain comme tête
+         BR      finOrd
+
+transEle:LDX     0,i              ;vérifie si cest un chiffre
+         STX     boolChif,d
+         CALL    veriChif
+         LDX     boolChif,d       ;si un chiffre, +50 pour s'assurer que les chiffres soient plus élevés
+         BREQ    majMin           ;sinon traite les lettres pour que les majuscules et les miniscules soient égales
+         ADDA    0x50,i
+retLet:  RET0
+
+majMin:  ORA     0x20,i           ;fait or20 pour que majuscules et minuscules soient égales
+         BR      retLet 
+
+ordonne: LDA     4,s              ;vérifie si plus grand ou plus petit, si c'est le cas on branche sur la méthode appropriée
+         CPA     2,s
+         BRLT    plusPet 
+         BRGT    plusGr
+retOrd:  RET0
+         
+plusGr:  LDX     1,i              ;plus grand donc met compare à 1
+         STX     compare,d
+         BR      retOrd
+
+plusPet: LDX     -1,i             ;plus petit donc met compare à -1
+         STX     compare,d
+         BR      retOrd                  
+
+tirait:  LDX     compteur,d       ;Vérifie si char +, si oui erreur     
+         BRGT    errLec  
+         LDX     nbcaract,d       ;Ajoute un caractère lu au compteur
+         ADDX    1,i         
+         STX     nbcaract,d
+         LDX     1,i
+         STX     compteur,d     
+         BR      lire 
+ 
+finlire: LDA     nbcaract,d       ;avons-nous au moins un caractère numérique ? si oui erreur
+         BREQ    debut         
+         LDA     compteur,d       ;vérifie s'il y a aucun nombre dans la dernière entrée si oui on gère
+         BREQ    retUn
+         CPA     1,i
+         BREQ    errLec 
+        
+         LDX     prochain,d       ;STORE LE COMPTEUR 1 CASE AU DESSUS DU TABLEAU
+         ADDX    1,i
+         STBYTEA tableau,x        
+
+         LDX     prochain,d
+         BREQ    moinsUn          ;PROCHAIN PREMIERE ENTREE, DONC DOIT STA -1
+         ADDX    1,i 
+         STBYTEA tableau,x  
+         STA     longueur,d       ;LA LONGUEUR EST LE NOMBRE DE COMPARAISON MAX, ON LOAD LE COMPTEUR DE À 1 DE PROCHAIN
+         LDX     1,i              ;SI PAS PREMIÈRE ENTRÉE, ON PREPARE LA COMPARAISON
+         STX     numComp,d        ;MET NUM DE COMPARAISON À 1, IMPORTANT POUR CALCULER NOMBRE COMPARAISON ET VOIR SI TETE      
+         LDX     tete,d           ;LE PREMIER ELEMENT COMPARER EST ELEMENT DE TETE
+         STX     eleComp,d                               
+         CALL    methOrd    
+ 
+retUn:   CALL    Ecriture         
+                         
+         BR      debut            ;retourne lire le prochain CHAINE           
+  
+
+Ecriture:STRO    reponse,d        ;affiche le message présentant la réponse
+         LDX     tete,d           ;charge la tête pour commencer l'écriture et charge le prochain
+         LDBYTEA     tableau,x
+         STA     prochain,d
+continu: ADDX    1,i              ;met le compteur à 1 pour aller chercher le compteur qui service pour la longueur
+         LDBYTEA     tableau,x
+         STA     compteur,d
+         CHARO   '-',i            ;écrit le tirait
+         LDA     1,i
+suite:   ADDX    1,i              ;ajoute 1 à X et A et compare avec le compteur
+         ADDA    1,i
+         CHARO   tableau,x
+         CPA     compteur,d
+         BREQ    suivant          ;si égale, on passe a la prochaine entré
+         BR      suite
+
+suivant: LDX     prochain,d       ;vérifie si la prochaine entré est le -1
+         CPX     255,i
+         BREQ    finEcri          ;si oui c'est fini pour cette écriture
+         LDBYTEA tableau,x        ;sinon prépare la prochaine entré
+         STA     prochain,d
+         CHARO   ' ',i            ;fait un espace
+         BR      continu    
+finEcri: RET0    
+   
+moinsUn:  LDX     -1,i            ;Tête à 0, donc première entrée. On met -1 et rien à ordonner
+         STBYTEX tableau,d
+         LDX     prochain,d
+         BR      retUn
+  
+errLec:  STRO    msgerreu,d       ;affiche le message d'erreure
+         LDA     0,i         
+         LDBYTEA caract,d 
+         CPA     10,i             ;caractère "Enter" ?
+         BREQ    debut            ;si oui on retourne à la lecture d'un nouveau nombre
+charSuiv:CHARI   caract,d         ;sinon vide les caractère jusqu'à "ENTER" en les lisant un par un
+         LDBYTEA caract,d         
+         CPA     10,i             ;caractère "Enter" ?
+         BREQ    debut            ;si oui on retourne à la lecture d'un nouveau nombre
+         BR      charSuiv         ;sinon on lit un autre caractère
+     
+
+
+ 
+       
+fin:     STRO normale,d      ;fin normale du programm
+         STOP
+bienvenu:.ASCII "Bienvenu dans ce programme de classification de symboles\n\nVeuillez entrez un ou plusieurs symboles en respectant ces conditions:\n-Le premier charactère d'un symbole sera obligatoirement un tiret\n-Le deuxieme charactère sera une lettre majuscule.\n"
+         .ASCII "-Un symbole ne doit pas dépasser 5 caractères incluant le tiret. \n-Un symbole ne peu contenir que 2 lettres.\n-La longeur total de la liste entrée ne doit pas dépasser 40 charactères\n"
+         .BYTE 0
+question:.ASCII "\n\nEntrez des valeurs codifiées à classer en ordre croissant (faite '.' pour terminer): "
+         .BYTE 0 
+msgerreu:.ASCII "\nEntrée invalide."
+         .BYTE 0 
+reponse: .ASCII "\n\nVoici vos valeurs codifiées en ordre croissant.\n"
+         .byte 0
+normale: .ASCII "\n\nFin normale du programme."
+         .BYTE 0
+
+boolMaj: .BLOCK 2            ; #2d  
+boolMin: .BLOCK 2            ; #2d        
+boolChif:.BLOCK 2            ; #2d
+nbcaract:.BLOCK 2            ; #2d nombre de caractères lus
+caract:  .BLOCK 1            ; #1h
+compteur:.BLOCK 2            ; #2d
+comptLet:.BLOCK 2 
+tableau: .BLOCK 39           ; #1h39a 
+         .BLOCK 29
+tete:    .BLOCK 2            ; #2d
+prochain:.BLOCK 2            ; #2d
+compare: .BLOCK 2            ; #2d
+numComp: .BLOCK 2            ; #2d 
+longueur:.BLOCK 2            ; #2d
+eleComp: .BLOCK 2            ; #2d
+dernier: .BLOCK 2            ; #2d 
+
+v1:      .equate 0           ; #2d     
+v2:      .equate 0           ; #2d
+ 
+.END 
